@@ -9,15 +9,13 @@ from supabase import create_client, Client
 import joblib
 import secrets
 from typing import Optional
-
+import openai
 
 # Load env variables from .env file
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise Exception("SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env file")
@@ -35,8 +33,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load your ML model (make sure 'ticket_classifier.pkl' is present)
-model = None
+# Load your ML model once at startup (improves prediction speed)
+print("Loading ML model...")
+model = joblib.load("ticket_classifier.pkl")
+print("Model loaded.")
 
 # Pydantic models
 class SignupInput(BaseModel):
@@ -56,7 +56,6 @@ class ResetPasswordInput(BaseModel):
     new_password: str
     token: Optional[str] = None
 
-
 class EmailCheckRequest(BaseModel):
     email: str
 
@@ -64,7 +63,14 @@ class TicketRequest(BaseModel):
     user_id: str
     ticket_text: str
 
-# Simulated email sender for forgot password (just prints the reset link)
+class TicketInput(BaseModel):
+    user_id: int
+    ticket_text: str
+
+class ChatInput(BaseModel):
+    message: str
+
+# Simulated email sender for forgot password (prints the reset link)
 def send_reset_email(email: str, reset_token: str):
     reset_link = f"http://localhost:3000/reset-password?token={reset_token}&email={email}"
     print(f"Password reset email sent to {email} with link: {reset_link}")
@@ -125,25 +131,10 @@ async def login(credentials: LoginInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Predict endpoint (unchanged)
-class TicketInput(BaseModel):
-    user_id: int
-    ticket_text: str
-
-from fastapi import HTTPException
-from datetime import datetime
-
-model = None  # at the top level, outside any function
-
+# Predict endpoint - model already loaded at startup
 @app.post("/predict")
 async def predict_ticket(ticket: TicketInput):
-    global model
     try:
-        if model is None:
-            print("Loading model inside /predict...")
-            model = joblib.load("ticket_classifier.pkl")
-            print("Model loaded.")
-
         prediction = model.predict([ticket.ticket_text])[0]
         confidence_scores = model.predict_proba([ticket.ticket_text])[0]
         confidence = max(confidence_scores)
@@ -160,7 +151,7 @@ async def predict_ticket(ticket: TicketInput):
         if ticket_response.data is None:
             raise HTTPException(status_code=400, detail="Failed to save ticket")
 
-        ticket_id = ticket_response.data[0]["ticket_id"]  # Get inserted ticket ID
+        ticket_id = ticket_response.data[0]["ticket_id"]
 
         # Insert prediction
         prediction_response = supabase.table("predictions").insert({
@@ -181,8 +172,7 @@ async def predict_ticket(ticket: TicketInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# History endpoint (unchanged)
+# History endpoint
 @app.get("/history/{user_id}")
 async def get_history(user_id: int):
     try:
@@ -206,7 +196,7 @@ async def forgot_password(data: ForgotPasswordInput, background_tasks: Backgroun
 
         supabase.table("users").update({"reset_token": reset_token}).eq("user_id", user["user_id"]).execute()
 
-        # Send reset email (simulated, prints reset link)
+        # Send reset email (simulated)
         background_tasks.add_task(send_reset_email, data.email, reset_token)
 
         return {"message": "Reset password instructions sent to your email."}
@@ -217,10 +207,8 @@ async def forgot_password(data: ForgotPasswordInput, background_tasks: Backgroun
 @app.post("/reset-password")
 async def reset_password(data: ResetPasswordInput):
     if data.token:
-        # do token validation
         response = supabase.table("users").select("*").eq("email", data.email).eq("reset_token", data.token).execute()
     else:
-        # skip token, just check email
         response = supabase.table("users").select("*").eq("email", data.email).execute()
 
     if not response.data:
@@ -237,7 +225,7 @@ async def reset_password(data: ResetPasswordInput):
 
     return {"message": "Password has been reset successfully."}
 
-
+# Check email endpoint
 @app.post("/check-email")
 def check_email(data: EmailCheckRequest):
     response = supabase.table("users").select("*").eq("email", data.email).execute()
@@ -245,21 +233,14 @@ def check_email(data: EmailCheckRequest):
         raise HTTPException(status_code=404, detail="Email not found")
     return {"message": "Email found"}
 
-
-
-import openai
-
-# Load OpenAI API key
+# OpenAI Chat endpoint
 openai.api_key = os.getenv("OPENAI_API_KEY")
-
-class ChatInput(BaseModel):
-    message: str
 
 @app.post("/chat")
 async def chat_with_gpt(input: ChatInput):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4o",  # or "gpt-3.5-turbo" if you want cheaper responses
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": input.message}
@@ -270,6 +251,7 @@ async def chat_with_gpt(input: ChatInput):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
     
 
