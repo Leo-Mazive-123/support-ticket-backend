@@ -1,0 +1,70 @@
+import pandas as pd
+
+data = [
+    # IT tickets (15 samples)
+    {"description": "My computer won’t start. I think it's a hardware issue.", "department": "IT"},
+    {"description": "Unable to access the VPN. Need help ASAP.", "department": "IT"},
+    {"description": "I need assistance installing Microsoft Office.", "department": "IT"},
+    {"description": "My Outlook keeps crashing. Please check.", "department": "IT"},
+    {"description": "I can’t connect to the printer in Block C.", "department": "IT"},
+    {"description": "I forgot my password and can’t log in.", "department": "IT"},
+    {"description": "Need help resetting my account password.", "department": "IT"},
+    {"description": "My internet connection is very slow.", "department": "IT"},
+    {"description": "Software updates are not installing.", "department": "IT"},
+    {"description": "I lost access to my email account.", "department": "IT"},
+    {"description": "Laptop battery is draining quickly.", "department": "IT"},
+    {"description": "Blue screen error when booting up.", "department": "IT"},
+    {"description": "My account was locked out after multiple login attempts.", "department": "IT"},
+    {"description": "Help me configure my new monitor.", "department": "IT"},
+    {"description": "Cannot connect to the shared network drive.", "department": "IT"},
+    {"description": "System update caused software error.", "department": "IT"},
+    {"description": "Can't access the internet.", "department": "IT"},
+    {"description": "Monitor not displaying anything.", "department": "IT"},
+    {"description": "Microsoft Teams not connecting.", "department": "IT"},
+
+    # HR tickets (15 samples)
+    {"description": "How do I apply for maternity leave?", "department": "HR"},
+    {"description": "Requesting my payslip for June.", "department": "HR"},
+    {"description": "Need to update my emergency contact info.", "department": "HR"},
+    {"description": "When will appraisals be completed?", "department": "HR"},
+    {"description": "Help needed with employee onboarding.", "department": "HR"},
+    {"description": "How do I change my benefits plan?", "department": "HR"},
+    {"description": "Requesting time off for next week.", "department": "HR"},
+    {"description": "I want to update my bank details for salary.", "department": "HR"},
+    {"description": "What is the company policy on remote work?", "department": "HR"},
+    {"description": "How can I access my training records?", "department": "HR"},
+    {"description": "Please provide information on health insurance.", "department": "HR"},
+    {"description": "Requesting details about pension contributions.", "department": "HR"},
+    {"description": "How to report workplace harassment?", "department": "HR"},
+    {"description": "Need help with resignation process.", "department": "HR"},
+    {"description": "How do I update my job title and department?", "department": "HR"},
+    {"description": "Need help with internal job transfer", "department": "HR"},
+    {"description": "My job title is listed incorrectly", "department": "HR"},
+    {"description": "Lost my staff ID badge", "department": "HR"},
+    {"description": "Need to update emergency contact details", "department": "HR"},
+
+    # Finance tickets (15 samples)
+    {"description": "My travel expense claims have not been reimbursed.", "department": "Finance"},
+    {"description": "Budget report for Q2 is missing some entries.", "department": "Finance"},
+    {"description": "I need a breakdown of this month’s payroll.", "department": "Finance"},
+    {"description": "How do I request a company credit card?", "department": "Finance"},
+    {"description": "Payment to a vendor is still pending.", "department": "Finance"},
+    {"description": "Need clarification on invoice #12345.", "department": "Finance"},
+    {"description": "Requesting reimbursement for office supplies.", "department": "Finance"},
+    {"description": "When will bonuses be paid this year?", "department": "Finance"},
+    {"description": "How to submit a budget proposal?", "department": "Finance"},
+    {"description": "Details about tax deductions on my salary.", "department": "Finance"},
+    {"description": "Help with expense report submission.", "department": "Finance"},
+    {"description": "What is the approval process for large purchases?", "department": "Finance"},
+    {"description": "Requesting a copy of last year’s financial statement.", "department": "Finance"},
+    {"description": "How to update my billing information?", "department": "Finance"},
+    {"description": "I have questions about payroll taxes.", "department": "Finance"},
+    {"description": "Need to update supplier billing details.", "department": "Finance"},
+    {"description": "I did not get paid for weekend shift.", "department": "Finance"},
+    {"description": "My bank account was not updated.", "department": "Finance"},
+    {"description": "Late payment for project invoice.", "department": "Finance"},
+    
+]
+
+df = pd.DataFrame(data)
+df.to_csv("tickets.csv", index=False)
